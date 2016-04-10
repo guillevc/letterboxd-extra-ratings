@@ -1,0 +1,29 @@
+{
+  "manifest_version": 2,
+
+  "name": "letterboxd-extra-ratings",
+  "description": "Adds display of imdb ratings to letterboxd film pages",
+  "version": "0.0.1",
+  "_default_locale": "en",
+  "icons": {
+    "128": "images/icon128.png",
+    "48": "images/icon48.png"
+  },
+
+  "_background": {
+    "persistent": false
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://letterboxd.com/film/*"
+      ],
+      "css": [
+        "css/main.css"
+      ],
+      "js": [
+        "js/contentscript.js"
+      ]
+    }
+  ]
+}
