@@ -5,52 +5,64 @@ function buildApiUrl(imdbId) {
 }
 
 function getImdbId() {
-  const footer = document.getElementsByClassName('text-footer')[0];
-  const imdbLink = footer.firstElementChild.href;
-  const idRe = /.*\/title\/(.*)\/.*/;
-  return idRe.exec(imdbLink)[1];
+  const idRegExp = /.*\/title\/(.*)\/.*/;
+  const footerArr = document.getElementsByClassName('text-footer');
+  if (footerArr && footerArr.length > 0) {
+    const footer = footerArr[0];
+    if (footer && footer.firstElementChild && footer.firstElementChild.href) {
+      const imdbLink = footer.firstElementChild.href;
+      const idArr = idRegExp.exec(imdbLink);
+      if (idArr && idArr.length > 1) {
+        return idArr[1];
+      }
+    }
+  }
+  return null;
 }
 
-function injectSection(imdbrating) {
+function injectSection(imdbRating, rTomatoes) {
   const sidebar = document.getElementsByClassName('sidebar')[0];
-  sidebar.style.paddingBottom = '20px';
 
   const newSection = document.createElement('section');
   newSection.className = 'section';
   newSection.style.marginTop = '10px';
 
-  const sectionHeading = document.createElement('h2');
-  sectionHeading.className = 'section-heading';
-  sectionHeading.textContent = 'MORE RATINGS';
+  const newSectionInnerHTML =
+   `<h2 class="section-heading">EXTERNAL RATINGS</h2>
+    <div class="text">
+      <p class="rating-green">
+        IMDb - ${imdbRating} out of 10
+        <span style="vertical-align: middle;" class="rating rated-${Math.round(imdbRating)}"></span>
+        <br />
+        Rotten Tomatoes - ${rTomatoes.rating}
+        <span style="vertical-align: middle;" class="rating rated-${Math.round(rTomatoes.rating)}"></span>
+      </p>
+    </div>`;
 
-  const div = document.createElement('div');
-  div.className = 'text';
-  const p = document.createElement('p');
-  p.textContent = `IMDb Rating: ${imdbrating}/10`;
-  div.appendChild(p);
-
-  newSection.appendChild(sectionHeading);
-  newSection.appendChild(div);
+  newSection.innerHTML = newSectionInnerHTML;
   sidebar.appendChild(newSection);
+  sidebar.style.paddingBottom = '20px';
+}
+
+function makeRequest(method, url) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open(method, url, true);
+    xhr.onload = function() {
+      if (xhr.status >= 200 && xhr.status < 400) {
+        resolve(xhr.responseText);
+      } else {
+        reject(xhr.responseText);
+      }
+    };
+    xhr.onerror = function() {
+      reject(xhr.responseText);
+    };
+    xhr.send();
+  });
 }
 
 const imdbId = getImdbId();
 const url = buildApiUrl(imdbId);
 
-let imdbRating;
-
-const request = new XMLHttpRequest();
-request.open('GET', url, true);
-request.onload = function() {
-  if (request.status >= 200 && request.status < 400) {
-    // Success!
-    imdbRating = JSON.parse(request.responseText).imdbRating;
-    if (imdbRating) injectSection(imdbRating);
-  } else {
-    console.log('error making api request');
-  }
-};
-request.onerror = function() {
-  console.log('error during api request');
-};
-request.send();
+makeRequest('GET', url).then(rText => console.log('success: ' + rText)).catch(rText => console.log('error: ' + rText));
