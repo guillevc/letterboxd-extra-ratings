@@ -1,9 +1,5 @@
 'use strict';
 
-function buildApiUrl(imdbId) {
-  return `http://www.omdbapi.com/?i=${imdbId}&plot=short&r=json&tomatoes=true`;
-}
-
 function getImdbId() {
   const idRegExp = /.*\/title\/(.*)\/.*/;
   const footerArr = document.getElementsByClassName('text-footer');
@@ -20,7 +16,11 @@ function getImdbId() {
   return null;
 }
 
-function injectSection(imdbRating, rTomatoes) {
+function buildApiUrl(imdbId) {
+  return `http://www.omdbapi.com/?i=${imdbId}&plot=short&r=json&tomatoes=true`;
+}
+
+function injectSection(imdbRating, tomatoRating) {
   const sidebar = document.getElementsByClassName('sidebar')[0];
 
   const newSection = document.createElement('section');
@@ -34,8 +34,8 @@ function injectSection(imdbRating, rTomatoes) {
         IMDb - ${imdbRating} out of 10
         <span style="vertical-align: middle;" class="rating rated-${Math.round(imdbRating)}"></span>
         <br />
-        Rotten Tomatoes - ${rTomatoes.rating}
-        <span style="vertical-align: middle;" class="rating rated-${Math.round(rTomatoes.rating)}"></span>
+        Rotten Tomatoes - ${tomatoRating}
+        <span style="vertical-align: middle;" class="rating rated-${Math.round(tomatoRating)}"></span>
       </p>
     </div>`;
 
@@ -48,16 +48,14 @@ function makeRequest(method, url) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open(method, url, true);
-    xhr.onload = function() {
+    xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 400) {
         resolve(xhr.responseText);
       } else {
         reject(xhr.responseText);
       }
     };
-    xhr.onerror = function() {
-      reject(xhr.responseText);
-    };
+    xhr.onerror = () => reject(xhr.responseText);
     xhr.send();
   });
 }
@@ -65,4 +63,9 @@ function makeRequest(method, url) {
 const imdbId = getImdbId();
 const url = buildApiUrl(imdbId);
 
-makeRequest('GET', url).then(rText => console.log('success: ' + rText)).catch(rText => console.log('error: ' + rText));
+makeRequest('GET', url)
+  .then(rText => {
+    const parsed = JSON.parse(rText);
+    injectSection(parsed.imdbRating, parsed.tomatoRating);
+  })
+  .catch(rText => console.error('letterboxd-extra-ratings: error during api request ' + rText));
