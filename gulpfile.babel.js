@@ -23,7 +23,7 @@ gulp.task('babel', () => {
 
 gulp.task('copy', () => {
   return gulp.src([
-      'src/**/*',
+      'src/**',
       'src/**/_*.js',
       '!src/**/*.js'
       ])
@@ -33,10 +33,13 @@ gulp.task('copy', () => {
 gulp.task('build', ['babel', 'copy']);
 
 gulp.task('watch', ['build'], () => {
+
+  // Watching es6 javascript files
   gulp.watch([
-    'src/js/**/*.js',
-    '!src/js/**/_*.js'
+    'src/**/*.js',
+    '!src/**/_*.js'
   ], ['babel']);
+
 });
 
 gulp.task('default', ['watch']);
