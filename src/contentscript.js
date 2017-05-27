@@ -1,6 +1,6 @@
 'use strict';
 
-const WRAPAPI_KEY = "Cc5yy2kAMiz91tQoSYZrI0WH2mqcViba";
+const WRAPAPI_KEY = 'Cc5yy2kAMiz91tQoSYZrI0WH2mqcViba';
 
 function buildUrl(imdbId) {
   return `https://wrapapi.com/use/guillevc/movieratings/imdb/latest?imdbId=${imdbId}&wrapAPIKey=${WRAPAPI_KEY}`;
@@ -70,14 +70,20 @@ function injectSection(imdbRating, metascore) {
     const url = buildUrl(imdbId);
     makeRequest('GET', url)
       .then(rText => {
-        let parsed;
+        let response;
         try {
-          parsed = JSON.parse(rText);
+          response = JSON.parse(rText);
         } catch(e) {
           console.error(`letterboxd-extra-ratings: ${e.message}`);
         }
-        injectSection(parsed.data.imdbRating, parsed.data.metascore);
+        if (response.success && response.data) {
+          const imdbRating = Number.parseFloat(response.data.imdbRating);
+          const metascore = Number.parseInt(response.data.metascore, 10);
+          injectSection(imdbRating, metascore);
+        }
       })
-      .catch(rText => console.error('letterboxd-extra-ratings: error during api request ' + rText));
+      .catch(rText =>
+          console.error('letterboxd-extra-ratings: error during api request ' + rText)
+      );
   }
 })();
