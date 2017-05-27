@@ -1,5 +1,11 @@
 'use strict';
 
+const WRAPAPI_KEY = "Cc5yy2kAMiz91tQoSYZrI0WH2mqcViba";
+
+function buildUrl(imdbId) {
+  return `https://wrapapi.com/use/guillevc/movieratings/imdb/latest?imdbId=${imdbId}&wrapAPIKey=${WRAPAPI_KEY}`;
+}
+
 function makeRequest(method, url) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -14,10 +20,6 @@ function makeRequest(method, url) {
     xhr.onerror = () => reject(xhr.responseText);
     xhr.send();
   });
-}
-
-function buildApiUrl(imdbId) {
-  return `http://www.omdbapi.com/?i=${imdbId}&plot=short&r=json&tomatoes=true`;
 }
 
 function getImdbId() {
@@ -36,8 +38,7 @@ function getImdbId() {
   return null;
 }
 
-
-function injectSection(imdbRating, tomatoRating) {
+function injectSection(imdbRating, metascore) {
   const sidebar = document.getElementsByClassName('sidebar')[0];
 
   const newSection = document.createElement('section');
@@ -51,8 +52,8 @@ function injectSection(imdbRating, tomatoRating) {
         IMDb - ${imdbRating}
         <span style="vertical-align: middle;" class="rating rated-${Math.round(imdbRating)}"></span>
         <br />
-        Rotten Tomatoes - ${tomatoRating}
-        <span style="vertical-align: middle;" class="rating rated-${Math.round(tomatoRating)}"></span>
+        Metascore - ${metascore}
+        <span style="vertical-align: middle;" class="rating rated-${Math.round(metascore/10)}"></span>
       </p>
     </div>`;
 
@@ -61,20 +62,22 @@ function injectSection(imdbRating, tomatoRating) {
   sidebar.style.paddingBottom = '20px';
 }
 
-const imdbId = getImdbId();
-if (!imdbId) {
-  console.error('letterboxd-extra-ratings: imdb id not found in page');
-} else {
-  const url = buildApiUrl(imdbId);
-  makeRequest('GET', url)
-    .then(rText => {
-      let parsed;
-      try {
-        parsed = JSON.parse(rText);
-      } catch(e) {
-        console.error(`letterboxd-extra-ratings: ${e.message}`);
-      }
-      injectSection(parsed.imdbRating, parsed.tomatoRating);
-    })
-    .catch(rText => console.error('letterboxd-extra-ratings: error during api request ' + rText));
-}
+(function main() {
+  const imdbId = getImdbId();
+  if (!imdbId) {
+    console.error('letterboxd-extra-ratings: imdb id not found in page');
+  } else {
+    const url = buildUrl(imdbId);
+    makeRequest('GET', url)
+      .then(rText => {
+        let parsed;
+        try {
+          parsed = JSON.parse(rText);
+        } catch(e) {
+          console.error(`letterboxd-extra-ratings: ${e.message}`);
+        }
+        injectSection(parsed.data.imdbRating, parsed.data.metascore);
+      })
+      .catch(rText => console.error('letterboxd-extra-ratings: error during api request ' + rText));
+  }
+})();
