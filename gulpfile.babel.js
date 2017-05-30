@@ -1,11 +1,15 @@
 'use strict';
 
+// TODO: use gulpif
+// watch all files not only es6
+
 import del from 'del';
 import gulp from 'gulp';
 import babel from 'gulp-babel';
 import sourcemaps from 'gulp-sourcemaps';
+import zip from 'gulp-zip';
 
-gulp.task('clean', del.bind(null, ['dist']));
+gulp.task('clean', del.bind(null, ['dist', 'dist-zip']));
 
 gulp.task('babel', () => {
   return gulp.src([
@@ -40,6 +44,18 @@ gulp.task('watch', ['build'], () => {
     '!src/**/_*.js'
   ], ['babel']);
 
+  // also watch for other files to copy
+
+});
+
+gulp.task('zip', ['build'], () => {
+  const manifest = require('./src/manifest');
+  const packagejson = require('./package.json');
+  const fileName = `${packagejson.name}-v${manifest.version}.zip`;
+
+  return gulp.src('dist/')
+    .pipe(zip(fileName))
+    .pipe(gulp.dest('dist-zip/'));
 });
 
 gulp.task('default', ['watch']);

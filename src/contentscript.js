@@ -45,19 +45,18 @@ function injectSection(imdbRating, metascore) {
   newSection.className = 'section';
   newSection.style.marginTop = '10px';
 
-  const newSectionInnerHTML =
-   `<h2 class="section-heading">EXTERNAL RATINGS</h2>
+  newSection.innerHTML =
+    `<h2 class="section-heading">EXTERNAL RATINGS</h2>
     <div class="text">
       <p class="rating-green">
-        IMDb - ${imdbRating}
+        IMDb — ${imdbRating}/10
         <span style="vertical-align: middle;" class="rating rated-${Math.round(imdbRating)}"></span>
         <br />
-        Metascore - ${metascore}
+        Metascore — ${metascore}/100
         <span style="vertical-align: middle;" class="rating rated-${Math.round(metascore/10)}"></span>
       </p>
     </div>`;
 
-  newSection.innerHTML = newSectionInnerHTML;
   sidebar.appendChild(newSection);
   sidebar.style.paddingBottom = '20px';
 }
@@ -70,20 +69,21 @@ function injectSection(imdbRating, metascore) {
     const url = buildUrl(imdbId);
     makeRequest('GET', url)
       .then(rText => {
-        let response;
         try {
-          response = JSON.parse(rText);
+          const response = JSON.parse(rText);
+          if (response.success && response.data) {
+            const imdbRating = Number.parseFloat(response.data.imdbRating);
+            const metascore = Number.parseInt(response.data.metascore, 10);
+            injectSection(imdbRating, metascore);
+          } else {
+            console.error('letterboxd-extra-ratings: ratings for this film were not found');
+          }
         } catch(e) {
           console.error(`letterboxd-extra-ratings: ${e.message}`);
         }
-        if (response.success && response.data) {
-          const imdbRating = Number.parseFloat(response.data.imdbRating);
-          const metascore = Number.parseInt(response.data.metascore, 10);
-          injectSection(imdbRating, metascore);
-        }
       })
       .catch(rText =>
-          console.error('letterboxd-extra-ratings: error during api request ' + rText)
+          console.error(`letterboxd-extra-ratings: error during api request: ${rText}`)
       );
   }
 })();
